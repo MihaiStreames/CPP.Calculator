@@ -4,8 +4,11 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
+    , expectingNewOperand(false)
 {
     ui->setupUi(this);
+    currentDisplay = "";
+    ui->number->display("0");
 
     // Digit Buttons
     connect(ui->zeroButton, SIGNAL(clicked()), this, SLOT(digitClicked()));
@@ -41,9 +44,14 @@ MainWindow::~MainWindow()
 void MainWindow::digitClicked() {
     QPushButton *button = qobject_cast<QPushButton *>(sender());
     if (button) {
-        QString digitValue = button->text();
-        MainCalculator.Operation(digitValue.toStdString());
-        ui->number->display(MainCalculator.Number);
+        if (expectingNewOperand && button->text() != "0") {
+            currentDisplay = "";
+            expectingNewOperand = false;
+        }
+
+        currentDisplay += button->text();
+        MainCalculator.UpdateNumber(currentDisplay.toDouble());
+        ui->number->display(currentDisplay);
     }
 }
 
@@ -51,40 +59,47 @@ void MainWindow::operationClicked() {
     QPushButton *button = qobject_cast<QPushButton *>(sender());
     if (button) {
         QString operation = button->text();
-        if (operation == "+") {
-            MainCalculator.Operation("1");
-        } else if (operation == "-") {
-            MainCalculator.Operation("2");
-        } else if (operation == "*") {
-            MainCalculator.Operation("3");
-        } else if (operation == "/") {
-            MainCalculator.Operation("4");
-        } else if (operation == "%") {
-            MainCalculator.Operation("5");
-        }
-        ui->number->display(MainCalculator.Number);
+        MainCalculator.Operation(operation.toStdString());
+
+        expectingNewOperand = true;
+        ui->number->display(MainCalculator.getNumber());
     }
 }
 
 void MainWindow::equalClicked() {
     MainCalculator.Operation("=");
+
     if (MainCalculator.isError()) {
-        ui->number->display("Error"); // Show an error message
+        ui->number->display("Error");
     } else {
-        ui->number->display(MainCalculator.Number);
+        double result = MainCalculator.getNumber();
+        ui->number->display(result);
     }
+
+    expectingNewOperand = true;
 }
 
 void MainWindow::plusMinusClicked() {
     MainCalculator.PlusMinus();
-    ui->number->display(MainCalculator.Number);
+    ui->number->display(MainCalculator.getNumber());
 }
 
 void MainWindow::clearClicked() {
     MainCalculator.Clear();
-    ui->number->display(MainCalculator.Number);
+    currentDisplay = "";
+    ui->number->display("0");
+    expectingNewOperand = true;
 }
 
 void MainWindow::dotClicked() {
-    // TODO: Add a dot to the current value
+    if (expectingNewOperand) {
+        currentDisplay = "0";
+        expectingNewOperand = false;
+    }
+
+    if (!currentDisplay.contains('.')) {
+        currentDisplay += ".";
+    }
+
+    ui->number->display(currentDisplay);
 }

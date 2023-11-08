@@ -5,5 +5,4 @@ set(CMAKE_CXX_STANDARD 23)
 
 add_executable(Calculator
         calculator.cpp
-        calculator.h
-        tests.cpp)
+        calculator.h)

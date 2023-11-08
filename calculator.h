@@ -1,41 +1,47 @@
 #ifndef CALC_H
 #define CALC_H
 
-#include <string>
+#include <iostream>
 #include <cassert>
 #include <cctype>
+#include <string>
 #include <stdexcept>
-#include <iostream>
+#include <unordered_map>
+#include <functional>
 
 using namespace std;
 
-enum OperationType {
-    None, AddOp, Subtract, Multiply, Divide, SquareRootOp, PercentOp
-};
+enum Op { None, AddOp, Subtract, Multiply, Divide, SquareRootOp, PercentOp };
 
 class Calc {
 public:
     Calc();
-    double Number;
-
-    void Operation(const std::string& n);
+    void Operation(const string& input);
+    void Clear();
+    void Sqrt();
+    void PerformOperation();
     void PlusMinus();
     void Percent();
-    bool isError() const { return error; }
-    void Clear();
-
-private:
-    double stack[2];
-    OperationType currentOperation;
-
-    bool error; // Error flag
-    void PerformOperation();
     void Add();
     void Sub();
     void Mult();
     void Div();
-    void Sqrt();
     double SquareRoot(double n);
+
+    void SetNewOperandExpected();
+    void UpdateNumber(double value);
+
+    double getNumber() const { return Number; }
+    bool isError() const { return error; }
+
+private:
+    double Number;
+    double stack[2];
+
+    Op currentOperation;
+    bool error;
+    void SetCurrentOperation(Op op);
+    static const unordered_map<string, function<void(Calc&)>> operations;
 };
 
 #endif // CALC_H

@@ -1,66 +1,50 @@
 #include "calculator.h"
 
+const unordered_map<string, function<void(Calc&)>> Calc::operations = {
+        {"Sqrt", &Calc::Sqrt},
+        {"Clear", &Calc::Clear},
+        {"+/-", &Calc::PlusMinus},
+        {"%", &Calc::Percent},
+        {"+", [](Calc& c) { c.SetCurrentOperation(AddOp); }},
+        {"-", [](Calc& c) { c.SetCurrentOperation(Subtract); }},
+        {"×", [](Calc& c) { c.SetCurrentOperation(Multiply); }},
+        {"÷", [](Calc& c) { c.SetCurrentOperation(Divide); }},
+        {"=", &Calc::PerformOperation}
+};
+
 Calc::Calc() : Number(0), currentOperation(None), error(false) {
     stack[0] = 0;
     stack[1] = 0;
 }
 
 void Calc::Operation(const string& input) {
-    if (input == "Sqrt") {
-        Sqrt();
-        return;
-    } else if (input == "Clear") {
-        Clear();
-        return;
-    } else if (input == "=") {
-        PerformOperation();
-        currentOperation = None;
-        return;
-    } else if (input == "+/-") {
-        PlusMinus();
-        return;
-    }
-
-    try {
-        // Handle numeric input; check for a number or a decimal point
-        if (isdigit(input[0]) || input[0] == '.' || (input[0] == '-' && input.size() > 1)) {
-            if (currentOperation == None) {
-                stack[1] = stod(input); // If no operation, set stack[1]
-            } else {
-                stack[0] = stod(input); // If there's an operation, set stack[0]
-            }
-            Number = stack[1]; // Update display number
-            return;
+    auto it = operations.find(input);
+    if (it != operations.end()) {
+        it->second(*this);
+    } else if (isdigit(input[0]) || input[0] == '.' || (input[0] == '-' && input.size() > 1)) {
+        try {
+            UpdateNumber(stod(input));
+        } catch (const invalid_argument& ia) {
+            error = true;
         }
-    } catch (const invalid_argument& e) {
-        // Handle invalid argument
+    } else {
+        // Handle error or unknown operation
         error = true;
-        return;
-    } catch (const out_of_range& e) {
-        // Handle out of range
-        error = true;
-        return;
-    }
-
-    // Handle setting the current operation
-    if (input == "+") {
-        currentOperation = AddOp;
-    } else if (input == "-") {
-        currentOperation = Subtract;
-    } else if (input == "*") {
-        currentOperation = Multiply;
-    } else if (input == "/") {
-        currentOperation = Divide;
-    } else if (input == "%") {
-        currentOperation = PercentOp;
-        Percent(); // Calculate percentage immediately
     }
 }
 
 void Calc::Sqrt() {
-    if (error) return;
-    Number = SquareRoot(stack[0]);
+    double valueToSqrt = (currentOperation == None) ? stack[1] : stack[0];
+    double sqrtResult = SquareRoot(valueToSqrt);
+
+    if (error) {
+        Number = 0;
+    } else {
+        Number = sqrtResult;
+    }
+
     stack[0] = Number;
+    stack[1] = Number;
 }
 
 void Calc::Clear() {
@@ -72,7 +56,10 @@ void Calc::Clear() {
 }
 
 void Calc::PerformOperation() {
-    if (error) return;
+    if (error || currentOperation == None) {
+        cout << "Error or no current operation, returning" << endl;
+        return;
+    }
 
     switch (currentOperation) {
         case AddOp: Add(); break;
@@ -82,8 +69,28 @@ void Calc::PerformOperation() {
         default: break;
     }
 
-    // After the operation, prepare for a new calculation or repeat the operation
+    currentOperation = None;
+}
+
+void Calc::UpdateNumber(double value) {
+    Number = value;
+    if (currentOperation == None) {
+        stack[1] = value;
+    } else {
+        stack[0] = value;
+    }
+}
+
+void Calc::SetCurrentOperation(Op op) {
+    if (currentOperation != None) {
+        PerformOperation();
+    }
+    currentOperation = op;
+}
+
+void Calc::SetNewOperandExpected() {
     stack[0] = Number;
+    Number = 0;
 }
 
 void Calc::PlusMinus() {
@@ -95,16 +102,17 @@ void Calc::PlusMinus() {
 void Calc::Percent() {
     if (error) return;
 
-    // Apply percentage based on the previous operation
-    double result = stack[1] * (stack[0] / 100.0);
-    if (currentOperation == AddOp || currentOperation == Subtract) {
-        // If we're adding or subtracting, we should apply the percentage to the existing number
-        result = (currentOperation == AddOp) ? stack[1] + result : stack[1] - result;
+    double percentValue = stack[0] / 100.0;
+
+    if (currentOperation == AddOp) {
+        Number = stack[1] + (stack[1] * percentValue);
+    } else if (currentOperation == Subtract) {
+        Number = stack[1] - (stack[1] * percentValue);
+    } else {
+        Number = stack[1] * percentValue;
     }
 
-    Number = result;
-    stack[1] = Number; // Save the result as the next operand
-    currentOperation = None; // Reset the operation
+    stack[0] = Number;
 }
 
 void Calc::Add() {
