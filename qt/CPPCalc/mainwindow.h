@@ -2,10 +2,10 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include "calculator.h"
+#include "src/calculator.h"
 
 QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow; }
+namespace Ui { class Calculator; }
 QT_END_NAMESPACE
 
 class MainWindow : public QMainWindow
@@ -17,7 +17,7 @@ public:
     ~MainWindow();
 
 private:
-    Ui::MainWindow *ui;
+    Ui::Calculator *ui;
     Calc MainCalculator;
     QString currentDisplay;
     bool expectingNewOperand;

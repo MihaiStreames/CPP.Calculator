@@ -1,4 +1,5 @@
-/cmake-build-debug/
-/qt/CPPCalc/cmake-build-debug/
 .idea
+
+# CMake
 /qt/build-CPPCalc-Desktop-Debug/
+/src/cmake-build-debug/

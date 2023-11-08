@@ -3,7 +3,7 @@
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
+    , ui(new Ui::Calculator)
     , expectingNewOperand(false)
 {
     ui->setupUi(this);
@@ -44,12 +44,19 @@ MainWindow::~MainWindow()
 void MainWindow::digitClicked() {
     QPushButton *button = qobject_cast<QPushButton *>(sender());
     if (button) {
-        if (expectingNewOperand && button->text() != "0") {
+        if (expectingNewOperand) {
             currentDisplay = "";
             expectingNewOperand = false;
         }
 
-        currentDisplay += button->text();
+        if (currentDisplay == "0" && button->text() == "0") {
+            return;
+        } else if (currentDisplay == "0") {
+            currentDisplay = button->text();
+        } else {
+            currentDisplay += button->text();
+        }
+
         MainCalculator.UpdateNumber(currentDisplay.toDouble());
         ui->number->display(currentDisplay);
     }
