@@ -21,7 +21,7 @@ cmake ..
 make
 ```
 
-This will generate the CPPCalc executable within the build directory.
+This will generate the `CPPCalc` executable within the build directory.
 
 ## Usage
 To run the calculator application, execute the following command from the build directory:
