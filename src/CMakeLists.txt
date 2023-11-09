@@ -6,7 +6,9 @@ set(CMAKE_CXX_STANDARD 23)
 add_executable(Calculator
         calculator.cpp
         calculator.h
-        ops/sqrt.cpp
-        ops/sqrt.h
-        ops/arithmetic.cpp
-        ops/arithmetic.h)
+        ops/arithmetics.cpp
+        ops/operations.h
+        ops/negation.cpp
+        expr-proc.cpp
+        expr-proc.h
+        tests.cpp)

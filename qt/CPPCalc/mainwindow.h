@@ -19,16 +19,16 @@ public:
 private:
     Ui::Calculator *ui;
     Calc MainCalculator;
-    QString currentDisplay;
+    QString qDisplay;
     bool expectingNewOperand;
 
 private slots:
-    void digitClicked();
-    void operationClicked();
-    void clearClicked();
-    void equalClicked();
-    void plusMinusClicked();
-    void dotClicked();
+    void digit_clicked();
+    void operation_clicked();
+    void clear_clicked();
+    void equal_clicked();
+    void plus_minus_clicked();
+    void dot_clicked();
 
 };
 #endif // MAINWINDOW_H

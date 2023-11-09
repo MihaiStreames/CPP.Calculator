@@ -23,8 +23,8 @@ set(PROJECT_SOURCES
         mainwindow.h
         mainwindow.ui
         ../../src/calculator.cpp
-        ../../src/ops/arithmetic.cpp
-        ../../src/ops/sqrt.cpp
+        ../../src/expr-proc.cpp
+        ../../src/ops/arithmetics.cpp
         ${TS_FILES})
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
