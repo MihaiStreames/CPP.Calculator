@@ -1,15 +1,17 @@
 #include "calculator.h"
+#include "ops/sqrt.h"
+#include "ops/arithmetic.h"
 
 const unordered_map<string, function<void(Calc&)>> Calc::operations = {
-        {"Sqrt", &Calc::Sqrt},
-        {"Clear", &Calc::Clear},
-        {"+/-", &Calc::PlusMinus},
+        {"Sqrt", &Operations::Sqrt},
+        {"clear", &Calc::clear},
+        {"+/-", &Calc::plusMinus},
         {"%", &Calc::Percent},
-        {"+", [](Calc& c) { c.SetCurrentOperation(AddOp); }},
-        {"-", [](Calc& c) { c.SetCurrentOperation(Subtract); }},
-        {"×", [](Calc& c) { c.SetCurrentOperation(Multiply); }},
-        {"÷", [](Calc& c) { c.SetCurrentOperation(Divide); }},
-        {"=", &Calc::PerformOperation}
+        {"+", &Operations::Add},
+        {"-", &Operations::Subtract},
+        {"×", &Operations::Multiply},
+        {"÷", &Operations::Divide},
+        {"=", &Operations::performOperation}
 };
 
 Calc::Calc() : Number(0), currentOperation(None), error(false) {
@@ -17,37 +19,27 @@ Calc::Calc() : Number(0), currentOperation(None), error(false) {
     stack[1] = 0;
 }
 
-void Calc::Operation(const string& input) {
-    auto it = operations.find(input);
-    if (it != operations.end()) {
-        it->second(*this);
-    } else if (isdigit(input[0]) || input[0] == '.' || (input[0] == '-' && input.size() > 1)) {
-        try {
-            UpdateNumber(stod(input));
-        } catch (const invalid_argument& ia) {
-            error = true;
+void Calc::operation(const string& input) {
+    if (input == "=") {
+        if (currentOperation != None) {
+            Operations::performOperation(*this);
+            currentOperation = None;
         }
     } else {
-        // Handle error or unknown operation
-        error = true;
+        auto opIt = operations.find(input);
+        if (opIt != operations.end()) {
+            if (currentOperation != None) {
+                Operations::performOperation(*this);
+            }
+            setCurrentOperation(input);
+            opIt->second(*this);
+        } else {
+            throw invalid_argument("Invalid operation: " + input);
+        }
     }
 }
 
-void Calc::Sqrt() {
-    double valueToSqrt = (currentOperation == None) ? stack[1] : stack[0];
-    double sqrtResult = SquareRoot(valueToSqrt);
-
-    if (error) {
-        Number = 0;
-    } else {
-        Number = sqrtResult;
-    }
-
-    stack[0] = Number;
-    stack[1] = Number;
-}
-
-void Calc::Clear() {
+void Calc::clear() {
     Number = 0;
     stack[0] = 0;
     stack[1] = 0;
@@ -55,24 +47,7 @@ void Calc::Clear() {
     error = false;
 }
 
-void Calc::PerformOperation() {
-    if (error || currentOperation == None) {
-        cout << "Error or no current operation, returning" << endl;
-        return;
-    }
-
-    switch (currentOperation) {
-        case AddOp: Add(); break;
-        case Subtract: Sub(); break;
-        case Multiply: Mult(); break;
-        case Divide: Div(); break;
-        default: break;
-    }
-
-    currentOperation = None;
-}
-
-void Calc::UpdateNumber(double value) {
+void Calc::updateNumber(double value) {
     Number = value;
     if (currentOperation == None) {
         stack[1] = value;
@@ -81,19 +56,30 @@ void Calc::UpdateNumber(double value) {
     }
 }
 
-void Calc::SetCurrentOperation(Op op) {
-    if (currentOperation != None) {
-        PerformOperation();
-    }
-    currentOperation = op;
+Op Calc::getCurrentOperation() const {
+    return currentOperation;
 }
 
-void Calc::SetNewOperandExpected() {
+void Calc::setCurrentOperation(const string& opStr) {
+    if (opStr == "+") {
+        currentOperation = AddOp;
+    } else if (opStr == "-") {
+        currentOperation = Sub;
+    } else if (opStr == "×") {
+        currentOperation = Mult;
+    } else if (opStr == "÷") {
+        currentOperation = Div;
+    } else {
+        currentOperation = None;
+    }
+}
+
+void Calc::setNewOperandExpected() {
     stack[0] = Number;
     Number = 0;
 }
 
-void Calc::PlusMinus() {
+void Calc::plusMinus() {
     if (error || currentOperation != None) return;
     stack[1] = -stack[1];
     Number = stack[1];
@@ -102,56 +88,41 @@ void Calc::PlusMinus() {
 void Calc::Percent() {
     if (error) return;
 
-    double percentValue = stack[0] / 100.0;
+    double operand = stack[1];
+    double percentage = operand * 0.01;
 
-    if (currentOperation == AddOp) {
-        Number = stack[1] + (stack[1] * percentValue);
-    } else if (currentOperation == Subtract) {
-        Number = stack[1] - (stack[1] * percentValue);
-    } else {
-        Number = stack[1] * percentValue;
+    switch (currentOperation) {
+        case AddOp: Number = stack[0] + (stack[0] * percentage); break;
+        case Sub: Number = stack[0] - (stack[0] * percentage); break;
+        case Mult: Number = stack[0] * percentage; break;
+        case Div:
+            if (percentage == 0) {
+                setError(true);
+                Number = 0;
+            } else {
+                Number = stack[0] / percentage;
+            }
+            break;
+        default: Number = percentage; break;
     }
 
-    stack[0] = Number;
-}
-
-void Calc::Add() {
-    Number = stack[1] + stack[0];
     stack[1] = Number;
 }
 
-void Calc::Sub() {
-    Number = stack[1] - stack[0];
-    stack[1] = Number;
+double Calc::getStackValue(int index) {
+    assert(index >= 0 && index < 2);
+    return stack[index];
 }
 
-void Calc::Mult() {
-    Number = stack[1] * stack[0];
-    stack[1] = Number;
+void Calc::setStackValue(int index, double value) {
+    assert(index >= 0 && index < 2);
+    stack[index] = value;
 }
 
-void Calc::Div() {
-    if (stack[0] == 0) {
-        error = true;
-        Number = 0;
-        return;
-    }
-    Number = stack[1] / stack[0];
-    stack[1] = Number;
-}
+void Calc::setNumber(double value) { Number = value; }
 
-double Calc::SquareRoot(double n) {
-    if (n < 0) {
-        error = true;
-        return 0; // Can't sqrt a negative number
-    }
+double Calc::getNumber() const { return Number; }
 
-    double x = n;
-    double y = 1;
-    double e = 0.000001;
-    while (x - y > e) {
-        x = (x + y) / 2;
-        y = n / x;
-    }
-    return x;
-}
+bool Calc::getError() const { return error; }
+
+void Calc::setError(bool value) { error = value; }

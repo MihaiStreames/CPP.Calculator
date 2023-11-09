@@ -22,7 +22,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->eightButton, SIGNAL(clicked()), this, SLOT(digitClicked()));
     connect(ui->nineButton, SIGNAL(clicked()), this, SLOT(digitClicked()));
 
-    // Operation Buttons
+    // operation Buttons
     connect(ui->plusButton, SIGNAL(clicked()), this, SLOT(operationClicked()));
     connect(ui->minusButton, SIGNAL(clicked()), this, SLOT(operationClicked()));
     connect(ui->multiplicationButton, SIGNAL(clicked()), this, SLOT(operationClicked()));
@@ -57,7 +57,7 @@ void MainWindow::digitClicked() {
             currentDisplay += button->text();
         }
 
-        MainCalculator.UpdateNumber(currentDisplay.toDouble());
+        MainCalculator.updateNumber(currentDisplay.toDouble());
         ui->number->display(currentDisplay);
     }
 }
@@ -66,33 +66,36 @@ void MainWindow::operationClicked() {
     QPushButton *button = qobject_cast<QPushButton *>(sender());
     if (button) {
         QString operation = button->text();
-        MainCalculator.Operation(operation.toStdString());
-
-        expectingNewOperand = true;
-        ui->number->display(MainCalculator.getNumber());
+        if (operation == "%") {
+            MainCalculator.Percent();
+            ui->number->display(MainCalculator.getNumber());
+        } else {
+            MainCalculator.operation(operation.toStdString());
+            expectingNewOperand = true;
+            ui->number->display(MainCalculator.getNumber());
+        }
     }
 }
 
 void MainWindow::equalClicked() {
-    MainCalculator.Operation("=");
+    MainCalculator.operation("=");
 
-    if (MainCalculator.isError()) {
+    if (MainCalculator.getError()) {
         ui->number->display("Error");
     } else {
         double result = MainCalculator.getNumber();
         ui->number->display(result);
+        expectingNewOperand = true;
     }
-
-    expectingNewOperand = true;
 }
 
 void MainWindow::plusMinusClicked() {
-    MainCalculator.PlusMinus();
+    MainCalculator.plusMinus();
     ui->number->display(MainCalculator.getNumber());
 }
 
 void MainWindow::clearClicked() {
-    MainCalculator.Clear();
+    MainCalculator.clear();
     currentDisplay = "";
     ui->number->display("0");
     expectingNewOperand = true;

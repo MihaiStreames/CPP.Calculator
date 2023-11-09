@@ -11,36 +11,34 @@
 
 using namespace std;
 
-enum Op { None, AddOp, Subtract, Multiply, Divide, SquareRootOp, PercentOp };
+enum Op { None, AddOp, Sub, Mult, Div, SquareRootOp, PercentOp };
 
 class Calc {
 public:
     Calc();
-    void Operation(const string& input);
-    void Clear();
-    void Sqrt();
-    void PerformOperation();
-    void PlusMinus();
+    Op currentOperation;
+
+    void operation(const string& input);
+    void clear();
+    void plusMinus();
     void Percent();
-    void Add();
-    void Sub();
-    void Mult();
-    void Div();
-    double SquareRoot(double n);
 
-    void SetNewOperandExpected();
-    void UpdateNumber(double value);
-
-    double getNumber() const { return Number; }
-    bool isError() const { return error; }
+    void setNewOperandExpected();
+    void updateNumber(double value);
+    Op getCurrentOperation() const;
+    void setCurrentOperation(const string& opStr);
+    double getStackValue(int index);
+    void setStackValue(int index, double value);
+    void setNumber(double value);
+    double getNumber() const;
+    void setError(bool value);
+    bool getError() const;
 
 private:
+    bool error;
     double Number;
     double stack[2];
 
-    Op currentOperation;
-    bool error;
-    void SetCurrentOperation(Op op);
     static const unordered_map<string, function<void(Calc&)>> operations;
 };
 
