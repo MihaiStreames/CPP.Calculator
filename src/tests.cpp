@@ -34,6 +34,8 @@ int main() {
     runTest("(3+4)*2", 14, "Parentheses test 1");
     runTest("2*(3+4)", 14, "Parentheses test 2");
     runTest("((2+3)*5)/5", 5, "Nested parentheses test");
+    runTest("((20*5)/20)*-1", -5, "Harder parantheses test");
+
 
     // Edge cases
     runTest("1/0", numeric_limits<double>::infinity(), "Division by zero test");
